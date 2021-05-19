@@ -1,0 +1,145 @@
+﻿@using System.Configuration
+@using Modal.EF
+@model Modal.EF.HoaDon
+@{
+    ViewBag.Title = "HoaDonChiTiet";
+}
+
+
+<!-- Header -->
+<div class="header bg-primary pb-6">
+    <div class="container-fluid">
+        <div class="header-body">
+            <div class="row align-items-center py-4">
+                <div class="col-lg-6 col-7">
+                    <h6 class="h2 text-white d-inline-block mb-0">Quản Lý Hoá Đơn</h6>
+                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                            <li class="breadcrumb-item"><a href="~/Manage/Manage/Index"><i class="fas fa-home"></i></a></li>
+                            <li class="breadcrumb-item"><a href="#">Quản Lý Hoá Đơn</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Hoá Đơn Chi Tiết</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="col-lg-6 col-5 text-right">
+                    <button type="button" class="btn btn-sm btn-neutral" id="btnInHoaDon">In Hoá Đơn</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Page content -->
+<div class="container-fluid mt--6">
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <!-- Card header -->
+                @*<div class="card-header border-0">
+            <h3 class="mb-0">Hoá Đơn Chi Tiết</h3>
+        </div>*@
+                <!-- Light table -->
+                <h2 class="m-3">Thông tin đơn hàng <font color="#f65e84">@Model.NguoiMua.TaiKhoan.hoten</font></h2>
+                <div class="ChiTietDonHang table" id="table">
+                    @{IEnumerable<HoaDonCT> lstHoaDonChiTiet = (IEnumerable<HoaDonCT>)ViewBag.ListHoaDonChiTiet;}
+                    <div>
+                        <span style="margin-left:2%" >Mã đơn hàng: <b style="color:red;">@Model.id_hoadon @Html.Hidden("MaDDh", Model.id_hoadon)</b></span>
+                        <span style="margin-left:5%" >Tên khách hàng: <b style="color:red">@Model.NguoiMua.TaiKhoan.hoten</b></span>
+                        <span style="margin-left:5%"> Ngày đặt: <b style="color:red">@Model.thoigian.ToString("dd/MM/yyyy")</b></span>
+                        <span style="margin-left:5%"> Tình Trạng Thanh Toán: <b class="text-success">@Model.hinhthuctt</b></span>
+                    </div>
+                    <br />
+                    @*<div>
+                        <span  style="float: left;"> Ngày đặt: <b style="color:red">@Model.thoigian.ToString("dd/MM/yyyy")</b></span>
+                        <span  style="float: right;"> Tình Trạng Thanh Toán: <b class="text-success">@Model.hinhthuctt</b></span>
+
+                    </div>*@
+                         <table class="table" id="tb" width="100%" cellpadding="0" cellspacing="0" >
+                            <tr style="text-align: center;">
+                                <th><b>STT</b></b></th>
+                                <th><b>Sản Phẩm</b></th>
+                                <th><b>Hình Ảnh</b></th>
+                                <th><b>Size</b></th>
+                                <th><b>Màu</b></th>
+                                <th><b>Số Lượng Đặt</b></th>
+                                <th><b>Đơn Giá Đặt</b></th>
+                            </tr>
+                            @{int i = 0;
+                                foreach (var item in lstHoaDonChiTiet)
+                                {
+                                    i += 1;
+                                    <tr style="text-align: center;">
+                                        <td>@i</td>
+                                        <td>@item.SanPham.tensp</td>
+                                        <td><img width="150" height="120" src="@Url.Content("~/Source/img-public/"+item.SanPham.hinhanh1)" /></td>
+                                        @{IEnumerable<Size> listSize = (IEnumerable<Size>)ViewBag.lstSize;
+                                            string size = "";
+                                            foreach (var s in listSize)
+                                            {
+                                                if (s != null && item.id_size == s.id_size)
+                                                {
+                                                    size = s.size;
+                                                }
+                                            }
+                                            if (size == "")
+                                            {
+                                                size = "";
+                                            }
+                                            <td>@size</td>
+                                        }
+
+                                        <td>@item.color</td>
+                                        <td>@item.soluong</td>
+                                        <td>@item.dongia.Value.ToString("##,#")</td>
+                                    </tr>
+                                }
+                            }
+                            <tr>
+                                <td align="right" colspan="7">Tổng số lượng: @Model.HoaDonCTs.Sum(n => n.soluong) sản phẩm</td>
+                            </tr>
+                            <tr>
+                                <td align="right" colspan="7">Tổng Tiền: @Model.tonggia.Value.ToString("##,#") đồng</td>
+                            </tr>
+                        </table>
+
+
+</div>
+                <div style="float:right" class="m-3">
+                    @Html.ActionLink("Trở Về", "QuanLyHoaDon", "Order", new { @class = "btn btn-danger" })
+                    @if (Model.magiaodich != null)
+                    {
+                        @Html.ActionLink("Xem Giao Dịch", "Urlpaypal", "Order", new { @magiaodich = Model.magiaodich }, new { @class = "btn btn-success" })
+                    }
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    @Html.Partial("_Footer")
+</div>
+<script src="~/Scripts/jquery-3.3.1.min.js"></script>
+<script>
+    $("#btnInHoaDon").click(function () {
+
+        document.getElementById("tb").border = '1';
+        var content = '<table border="1"  cellpadding="0" cellspacing="0">' + $(".table").html() + "</table>";
+        InDonHang(content);
+    });
+    function InDonHang(content) {
+    /*var printWindown = window.open('', '', 'height=400,width=1000');*/
+
+        var windowUrl = 'about:blank';
+        var uniqueName = new Date();
+        var windowName = 'Print' + uniqueName.getTime();
+        var printWindown = window.open(windowUrl, windowName, 'height=600,width=1000')
+        printWindown.document.write('<html><head><title>Hoá Đơn</title>');
+        printWindown.document.write('</head><body >');
+        printWindown.document.write('<h1 style="text-align: center;">Hoá Đơn Chi Tiết</h1>');
+        printWindown.document.write(content);
+        printWindown.document.write('</body></html>');
+        printWindown.document.close();
+        printWindown.print();
+        document.getElementById("tb").border = '0';
+    }
+</script>

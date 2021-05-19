@@ -1,0 +1,628 @@
+﻿@using Modal.EF
+@model IEnumerable<SanPham>
+@{
+    ViewBag.Title = "Sản Phẩm";
+    WebGrid grid = new WebGrid(source: Model, rowsPerPage: 4);
+}
+@{
+    IEnumerable<LoaiSanPham> lstlsp = ViewBag.maloaisp as IEnumerable<LoaiSanPham>;
+}
+<!-- Header -->
+<div class="header bg-primary pb-6">
+    <div class="container-fluid">
+        <div class="header-body">
+            <div class="row align-items-center py-4">
+                <div class="col-lg-6 col-7">
+                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                            <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
+                            <li class="breadcrumb-item"><a href="#">Trang Chủ</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">@ViewBag.Title</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="col-lg-6 col-5 text-right">
+                    <button type="button" class="btn btn-sm btn-neutral" data-toggle="modal" data-target="#CreateSanPham">Thêm Mới</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Page content -->
+<div class="container-fluid mt--6" id="sp">
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <!-- Card header -->
+                <div class="card-header border-0">
+                    <h3 class="mb-0">@ViewBag.Title</h3>
+                </div>
+                <!-- Light table -->
+                <div class="table-responsive">
+
+                    @grid.GetHtml(
+                        tableStyle: "table align-items-center table-flush",
+                        headerStyle: "thead-light",
+                        footerStyle: "table-pager",
+                        rowStyle: "",
+                        alternatingRowStyle: "gridAltRow",
+                        columns: grid.Columns(
+                        //grid.Column("id_sanpham", header: "Mã Sản Phẩm"),
+                        grid.Column("tensp", header: "Tên Sản Phẩm"),
+                        grid.Column("id_loaisp", header: "Loại Sản Phẩm", format: p => p.id_loaisp != null ? p.LoaiSanPham.tenloai : ""),
+                        grid.Column("tenngan", header: "Thông Tin"),
+                        grid.Column("soluong", header: "Số lượng"),
+                        grid.Column("dongia", header: "Đơn Giá", format: p => p.dongia != null ? p.dongia.ToString("C0", System.Globalization.CultureInfo.CreateSpecificCulture("vi-VN")) : ""),
+                        grid.Column("giasale", header: "Giá Sale", format: p => p.giasale != null ? p.giasale.ToString("C0", System.Globalization.CultureInfo.CreateSpecificCulture("vi-VN")) : ""),
+                        grid.Column("trangthai", header: "Trạng Thái"),
+                        grid.Column("hienthi", header: "Hiển Thị"),
+                        grid.Column("thongtin", header: "Thông Tin"),
+                        grid.Column("XepLoai", header: "Xếp Loại"),
+                        grid.Column("tinhtrang", header: "Tình Trạng"),
+                        grid.Column("hinhanh1", header: "Hình Ảnh 1", format: p => Html.Raw("<img width=\"150\" height=\"100\" src=\"../../Source/img-public/" + p.hinhanh1 + "\">")),
+                        grid.Column("hinhanh2", header: "Hình Ảnh 2", format: p => Html.Raw("<img width=\"150\" height=\"100\" src=\"../../Source/img-public/" + p.hinhanh2 + "\">")),
+                        grid.Column("hinhanh3", header: "Hình Ảnh 3", format: p => Html.Raw("<img width=\"150\" height=\"100\" src=\"../../Source/img-public/" + p.hinhanh3 + "\">")),
+                        grid.Column("hinhanh4", header: "Hình Ảnh 4", format: p => Html.Raw("<img width=\"150\" height=\"100\" src=\"../../Source/img-public/" + p.hinhanh4 + "\">")),
+                        grid.Column(format: p => Html.ActionLink("Sửa", "#", new { id = p.id_sanpham }, new { @class = "btn btn-info", onclick = "EditSanPham(" + p.id_sanpham + ")", data_toggle = "modal", data_target = "#EditSanPham" })),
+                        grid.Column(format: p => Html.ActionLink("Xoá", "DeleteSanPham", new { id = p.id_sanpham }, new { @class = "btn btn-danger", onclick = "return confirm('Bạn Có Muốn Xoá Sản Phẩm: " + p.tensp + "?')" }))
+                    ))
+
+                </div>
+
+                <!-- Card footer -->
+                @*<div class="card-footer py-4">
+                        <nav aria-label="...">
+                            <ul class="pagination justify-content-end mb-0">
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" tabindex="-1">
+                                        <i class="fas fa-angle-left"></i>
+                                        <span class="sr-only">Previous</span>
+                                    </a>
+                                </li>
+                                <li class="page-item active">
+                                    <a class="page-link" href="#">1</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="#">2 <span class="sr-only">(current)</span></a>
+                                </li>
+                                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                <li class="page-item">
+                                    <a class="page-link" href="#">
+                                        <i class="fas fa-angle-right"></i>
+                                        <span class="sr-only">Next</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>*@
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    @Html.Partial("_Footer")
+</div>
+
+<!-- Modal EditSanPham content-->
+<div id="EditSanPham" class="modal fade" role="dialog">
+    <div class="modal-dialog modal-xl">
+        @using (Html.BeginForm("TDSanPham", "Product", FormMethod.Post, new { @enctype = "multipart/form-data" }))
+        {
+            <!-- Modal content-->
+            <div class="modal-content" id="loadLoaiSP">
+                <div class="modal-header">
+                    <h4 class="modal-title">Sửa Sản Phẩm</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group row">
+                        <div class="col-2">
+                            <label>Tên Sản Phẩm:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="text" name="id_sanpham" id="id_sanpham_e" hidden />
+                            <input type="text" name="tensp" id="tensp_e" class="form-control" />
+                        </div>
+                        <div class="col-2" style="margin-left:10%">
+                            <label>Tên Loại:</label>
+                        </div>
+                        <div class="col-3">
+                            <select class="id_loaisp form-control" type="text" name="id_loaisp" id="id_loaisp">
+                                @foreach (var item in lstlsp)
+                                {
+                                    <option value="@item.id_loaisp">@item.tenloai</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-2">
+                            <label>Tên Ngắn:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="text" name="tenngan" id="tenngan_e" class="form-control" />
+                        </div>
+                        <div class="col-2" style="margin-left:10%">
+                            <label>Số Lượng:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="text" name="soluong" id="soluong_e" placeholder="Cập nhật từ màu" class="form-control" readonly />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-2">
+                            <label>Đơn Giá:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="text" name="dongia" id="dongia_e" class="form-control" />
+                        </div>
+                        <div class="col-2" style="margin-left:10%">
+                            <label>Giá Sale:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="text" name="giasale" id="giasale_e" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-2">
+                            <label>Trạng Thái:</label>
+                        </div>
+                        <div class="col-3">
+                            <select class="form-control" type="text" name="trangthai" id="trangthai_e">
+                                <option value="MỚI">MỚI</option>
+                                <option value="CŨ">CŨ</option>
+                            </select>
+                        </div>
+                        <div class="col-2" style="margin-left:10%">
+                            <label>Hiển Thị:</label>
+                        </div>
+                        <div class="col-3">
+                            <select class="form-control" type="text" name="hienthi" id="hienthi_e">
+                                <option value="HIỆN">HIỆN</option>
+                                <option value="ẨN">ẨN</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-2">
+                            <label>Tình Trạng:</label>
+                        </div>
+                        <div class="col-3">
+                            <select class="form-control" type="text" name="tinhtrang" id="tinhtrang_e">
+                                <option value="CÒN HÀNG">CÒN HÀNG</option>
+                                <option value="SẮP HẾT">SẮP HẾT</option>
+                                <option value="HẾT HÀNG">HẾT HÀNG</option>
+                                <option value="TỒN KHO ĐÃ LÂU">TỒN KHO ĐÃ LÂU</option>
+                                <option value="HÀNG LỖI">HÀNG LỖI</option>
+                            </select>
+                        </div>
+                        <div class="col-2" style="margin-left:10%">
+                            <label>Xếp Loại:</label>
+                        </div>
+                        <div class="col-3">
+                            <select class="form-control" type="text" name="XepLoai" id="xeploai_e">
+                                <option value="Trending Item">Trending Item</option>
+                                <option value="Hot Item">Hot Item</option>
+                                <option value="Onsale">Onsale</option>
+                                <option value="Best Saller">Best Saller</option>
+                                <option value="Top Viewed">Top Viewed</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-2">
+                            <label>Thông Tin:</label>
+                        </div>
+                        <div class="col-10">
+                            <textarea class="form-control" name="thongtin" id="thongtin_e"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-2">
+                            <label>Hình Ảnh 1:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="file" name="hinhanh" onchange="loadfile('img5',event)" accept="image/*" id="hinhanh_e1" />
+                            <img class="bg-success" id="img5" width="280" height="150" alt="" style="display:inline-block;border:1px solid #115c52" />
+                        </div>
+                        <div class="col-2" style="margin-left:10%">
+                            <label>Hình Ảnh 2:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="file" name="hinhanh" onchange="loadfile('img6',event)" accept="image/*" id="hinhanh_e2" />
+                            <img class="bg-success" id="img6" width="280" height="150" alt="" style="display:inline-block;border:1px solid #115c52" />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-2">
+                            <label>Hình Ảnh 3:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="file" name="hinhanh" onchange="loadfile('img7',event)" accept="image/*" id="hinhanh_e3" />
+                            <img class="bg-success" id="img7" width="280" height="150" alt="" style="display:inline-block;border:1px solid #115c52" />
+                        </div>
+                        <div class="col-2" style="margin-left:10%">
+                            <label>Hình Ảnh 4:</label>
+                        </div>
+                        <div class="col-3" id="hinhanh_e4">
+                            <input type="file" name="hinhanh" accept="image/*" onchange="loadfile('img8',event)" id="hinhanh_e4" />
+                            <img class="bg-success" id="img8" width="280" height="150" alt="" style="display:inline-block;border:1px solid #115c52" />
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-2">
+                            <label>Chiều Cao:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="text" name="chieucao" id="chieucao_e" class="form-control" />
+                        </div>
+                        <div class="col-2" style="margin-left:10%">
+                            <label>Chiều rộng:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="text" name="chieurong" id="chieurong_e" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-2">
+                            <label>Chiều dài:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="text" name="chieudai" id="chieudai_e" class="form-control" />
+                        </div>
+                        <div class="col-2" style="margin-left:10%">
+                            <label>Cân nặng:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="text" name="cannang" id="cannang_e" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <input type="submit" class="btn btn-success" value="Cập Nhật">
+                        <small><button type="button" class="btn btn-danger" data-dismiss="modal">Close</button></small>
+                    </div>
+
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!--Modal Create SanPham-->
+<div id="CreateSanPham" class="modal fade" role="dialog">
+    <div class="modal-dialog  modal-xl">
+        @using (Html.BeginForm("CreateSanPham", "Product", FormMethod.Post, new { @enctype = "multipart/form-data" }))
+        {
+            <!-- Modal content-->
+            <div class="modal-content" id="loadLoaiSP">
+                <div class="modal-header">
+                    <h4 class="modal-title">Thêm Loại Sản Phẩm</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group row">
+                        <div class="col-2">
+                            <label>Tên Sản Phẩm:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="text" name="tensp" class="form-control" />
+                        </div>
+                        <div class="col-2" style="margin-left:10%">
+                            <label>Tên Loại:</label>
+                        </div>
+                        <div class="col-3">
+                            <select class="id_loaisp form-control" type="text" name="id_loaisp">
+                                @foreach (var item in lstlsp)
+                                {
+                                    <option value="@item.id_loaisp">@item.tenloai</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-2">
+                            <label>Tên Ngắn:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="text" name="tenngan" class="form-control" />
+                        </div>
+                        <div class="col-2" style="margin-left:10%">
+                            <label>Số Lượng:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="text" name="soluong" class="form-control" readonly />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-2">
+                            <label>Đơn Giá:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="text" name="dongia" id="U_price" onchange="onKeyup('U_price')" class="form-control" />
+                        </div>
+                        <div class="col-2" style="margin-left:10%">
+                            <label>Giá Sale:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="text" name="giasale" id="U_sale" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-2">
+                            <label>Trạng Thái:</label>
+                        </div>
+                        <div class="col-3">
+                            <select class="form-control" type="text" name="trangthai">
+                                <option value="MỚI">MỚI</option>
+                                <option value="CŨ">CŨ</option>
+                            </select>
+                        </div>
+                        <div class="col-2" style="margin-left:10%">
+                            <label>Hiển Thị:</label>
+                        </div>
+                        <div class="col-3">
+                            <select class="form-control" type="text" name="hienthi">
+                                <option value="HIỆN">HIỆN</option>
+                                <option value="ẨN">ẨN</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-2">
+                            <label>Tình Trạng:</label>
+                        </div>
+                        <div class="col-3">
+                            <select class="form-control" type="text" name="tinhtrang">
+                                <option value="CÒN HÀNG">CÒN HÀNG</option>
+                                <option value="SẮP HẾT">SẮP HẾT</option>
+                                <option value="HẾT HÀNG">HẾT HÀNG</option>
+                                <option value="TỒN KHO ĐÃ LÂU">TỒN KHO ĐÃ LÂU</option>
+                                <option value="HÀNG LỖI">HÀNG LỖI</option>
+                            </select>
+                        </div>
+                        <div class="col-2" style="margin-left:10%">
+                            <label>Xếp Loại:</label>
+                        </div>
+                        <div class="col-3">
+                            <select class="form-control" type="text" name="XepLoai">
+                                <option value="Trending Item">Trending Item</option>
+                                <option value="Hot Item">Hot Item</option>
+                                <option value="Onsale">Onsale</option>
+                                <option value="Best Saller">Best Saller</option>
+                                <option value="Top Viewed">Top Viewed</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-2">
+                            <label>Thông Tin:</label>
+                        </div>
+                        <div class="col-10">
+                            <textarea class="form-control" style="width:100%;height:100%" name="thongtin" id="message-text"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-2">
+                            <label>Hình Ảnh 1:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="file" name="hinhanh" onchange="loadfile('img1',event)" accept="image/*" />
+                            <img class="bg-success" id="img1" width="280" height="150" alt="" style="display:none;border:1px solid #115c52" />
+                        </div>
+                        <div class="col-2" style="margin-left:10%">
+                            <label>Hình Ảnh 2:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="file" name="hinhanh" onchange="loadfile('img2',event)" accept="image/*" />
+                            <img class="bg-success" id="img2" width="280" height="150" alt="" style="display:none;border:1px solid #115c52" />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-2">
+                            <label>Hình Ảnh 3:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="file" name="hinhanh" onchange="loadfile('img3',event)" accept="image/*" />
+                            <img class="bg-success" id="img3" width="280" height="150" alt="" style="display:none;border:1px solid #115c52" />
+                        </div>
+                        <div class="col-2" style="margin-left:10%">
+                            <label>Hình Ảnh 4:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="file" name="hinhanh" onchange="loadfile('img4',event)" accept="image/*" />
+                            <img class="bg-success" id="img4" width="280" height="150" alt="" src="~/Source/img-public/" style="display:none;border:1px solid #115c52" />
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-2">
+                            <label>Chiều Cao:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="text" name="chieucao" placeholder="centimet" class="form-control" />
+
+                        </div>
+                        <div class="col-2" style="margin-left:10%">
+                            <label>Chiều rộng:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="text" name="chieurong" placeholder="centimet" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-2">
+                            <label>Chiều dài:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="text" name="chieudai" placeholder="centimet" class="form-control" />
+                        </div>
+                        <div class="col-2" style="margin-left:10%">
+                            <label>Cân nặng:</label>
+                        </div>
+                        <div class="col-3">
+                            <input type="text" name="cannang" placeholder="kilogram" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <input type="submit" class="btn btn-success" value="Cập Nhật">
+                        <small><button type="button" class="btn btn-danger" data-dismiss="modal">Close</button></small>
+                    </div>
+
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<script src="~/Scripts/jquery-3.3.1.min.js"></script>
+<script src="~/Areas/Manage/assets/vendor/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript">
+    function EditSanPham(idsp) {
+        $.ajax({
+            url: "/Manage/Manage/Get_SanPham_id/?id_sanpham=" + idsp,
+            type: "GET",
+            contentType: "application/json;charset=utf-8",
+            dataType: "json",
+            success: function (value) {
+                console.log(value);
+                $('#tensp_e').val(value.tensp);
+                $('#id_loaisp').val(value.id_loaisp);
+                $('#tenngan_e').val(value.tenngan);
+                if (Number($('#soluong_e').val(value.soluong)) == 0 || $('#soluong_e').val(value.soluong) == "") {
+                    $('#soluong_e').val("Cập nhật từ màu.");
+                }
+                else {
+                    $('#soluong_e').val(value.soluong);
+                }
+                $('#dongia_e').val(value.dongia);
+                $('#giasale_e').val(value.giasale);
+                $('#trangthai_e').val(value.trangthai);
+                $('#thongtin_e').val(value.thongtin);
+                $('#xeploai_e').val(value.xeploai);
+                $('#chieucao_e').val(value.chieucao);
+                $('#chieurong_e').val(value.chieurong);
+                $('#chieudai_e').val(value.chieudai);
+                $('#cannang_e').val(value.cannang);
+                $('#tinhtrang_e').val(value.tinhtrang);
+                $('#hienthi_e').val(value.hienthi);
+                $('#id_sanpham_e').val(value.id_sanpham);
+                $('#img5').attr('src', '../../Source/img-public/' + value.hinhanh1);
+                $('#img6').attr('src', '../../Source/img-public/' + value.hinhanh2);
+                $('#img7').attr('src', '../../Source/img-public/' + value.hinhanh3);
+                $('#img8').attr('src', '../../Source/img-public/' + value.hinhanh4);
+            },
+            error: function (errormessage) {
+                alert(errormessage.responseText);
+            }
+        });
+    }
+    function loadfile(img, event) {
+        var output = document.getElementById(img);
+        output.style.display = "inline-block";
+        output.src = URL.createObjectURL(event.target.files[0]);
+        output.onload = function () {
+            URL.revokeObjectURL(output.src) // free memory
+        }
+    };
+    //function changecurrency(id) {
+    //    var currencyInput = document.getElementById(id);
+    //    // format inital value
+    //    onKeyup({ target: currencyInput })
+    //    currencyInput.addEventListener('change', onKeyup)
+    //}
+
+
+    //function localStringToNumber(s) {
+    //    return Number(String(s).replace(/[^0-9.-]+/g, ""))
+    //}
+
+    //function onKeyup(id) {
+    //    var value = document.getElementById(id).value;
+    //    var currency = 'VND'
+    //    var options = {
+    //        maximumFractionDigits: 2,
+    //        currency: currency,
+    //        style: "currency",
+    //        currencyDisplay: "symbol"
+    //    }
+
+    //    document.getElementById(id).value=(value || value === 0)
+    //        ? localStringToNumber(value).str(undefined, options)
+    //        : ''
+    //}
+</script>
+<script>
+    $(document).ready(function () {
+        action_alert();
+    })
+    function action_alert() {
+    var notify = @ViewBag.notify;
+    var action = "@ViewBag.action";
+    @{ViewBag.notify = null;
+      ViewBag.action = null; }
+        if (notify == -1) {
+            alert_(action, "fail");
+            notify = 0;
+            }
+    else if (notify == 1) {
+            alert_(action, "success");
+            notify = 0;
+        }
+        setTimeout(function () { window.location.replace("https://localhost:44372/Manage/Product/QuanLySanPham"); }, 3000);
+
+    }
+    function alert_(title, type) {
+        var element = document.getElementById("sp");
+        element.classList.add("none");
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+
+        })
+        switch (type) {
+            case "success":
+                Toast.fire({
+                    icon: 'success',
+                    title: title
+                })
+                break;
+            case "fail":
+                Toast.fire({
+                    icon: 'error',
+                    title: title
+                })
+                break;
+            default:
+            // code block
+        }
+    }
+</script>
+
+<style>
+    .table-pager > td > a {
+        background-color: #f5f5f5;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        padding: 3px 7px;
+        border-radius: 50% !important;
+    }
+
+        .table-pager > td > a:hover {
+            background-color: #f0f0f0;
+        }
+
+    .table-pager > .active > a {
+        z-index: 3;
+        color: #fff;
+        border-color: #5e72e4;
+        background-color: #5e72e4;
+    }
+
+    .none {
+        cursor: none;
+    }
+</style>
